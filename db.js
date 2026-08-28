@@ -31,7 +31,7 @@ function sqliteAdapter() {
 function postgresAdapter() {
   const { Pool } = require('pg');
   const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : undefined });
-  const convert = (sql) => sql.replace(/\?/g, () => `$${++convert.index}`);
+  const convert = (sql) => { let index = 0; return sql.replace(/\?/g, () => `$${++index}`); };
   return {
     kind: 'postgres',
     async init() {
@@ -40,9 +40,9 @@ function postgresAdapter() {
         CREATE TABLE IF NOT EXISTS admin_users (username TEXT PRIMARY KEY,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'admin');
         CREATE TABLE IF NOT EXISTS audit_logs (id BIGSERIAL PRIMARY KEY,username TEXT,action TEXT NOT NULL,target_id TEXT,created_at TIMESTAMPTZ NOT NULL,ip TEXT);`);
     },
-    async get(sql, params = []) { convert.index = 0; const result = await pool.query(convert(sql) + ' LIMIT 1', params); return result.rows[0]; },
-    async all(sql, params = []) { convert.index = 0; return (await pool.query(convert(sql), params)).rows; },
-    async run(sql, params = []) { convert.index = 0; const result = await pool.query(convert(sql), params); return { changes: result.rowCount }; }
+    async get(sql, params = []) { const result = await pool.query(convert(sql) + ' LIMIT 1', params); return result.rows[0]; },
+    async all(sql, params = []) { return (await pool.query(convert(sql), params)).rows; },
+    async run(sql, params = []) { const result = await pool.query(convert(sql), params); return { changes: result.rowCount }; }
   };
 }
 

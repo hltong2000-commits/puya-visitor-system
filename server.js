@@ -9,7 +9,6 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'dev-only-change-me';
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
-const sessions = new Map();
 const requestWindows = new Map();
 
 if (process.env.NODE_ENV === 'production' && !process.env.ADMIN_PASSWORD) throw new Error('Production requires ADMIN_PASSWORD');
@@ -20,6 +19,25 @@ function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
   const digest = crypto.scryptSync(password, salt, 32).toString('hex');
   return `scrypt$${salt}$${digest}`;
+}
+
+function sessionSecret() { return crypto.createHash('sha256').update(`visitor-session:${ADMIN_PASSWORD}`).digest(); }
+
+function createSessionToken(username, role) {
+  const payload = Buffer.from(JSON.stringify({ username, role, exp: Date.now() + SESSION_TTL_MS })).toString('base64url');
+  const signature = crypto.createHmac('sha256', sessionSecret()).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+
+function parseSessionToken(token) {
+  try {
+    const [payload, signature] = String(token).split('.');
+    if (!payload || !signature) return null;
+    const expected = crypto.createHmac('sha256', sessionSecret()).update(payload).digest('base64url');
+    if (signature.length !== expected.length || !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    return data.exp > Date.now() ? data : null;
+  } catch { return null; }
 }
 
 function verifyPassword(password, stored) {
@@ -67,12 +85,8 @@ function parseCookies(req) {
 
 function currentSession(req) {
   const token = parseCookies(req).visitor_session;
-  const session = token && sessions.get(token);
-  if (!session || session.expiresAt < Date.now()) {
-    if (token) sessions.delete(token);
-    return null;
-  }
-  return { token, ...session };
+  const session = token && parseSessionToken(token);
+  return session ? { token, ...session } : null;
 }
 
 function requireAdmin(req, res) {
@@ -194,8 +208,7 @@ async function handle(req, res) {
       const valid = user && verifyPassword(String(body.password || ''), user.password_hash);
       if (!valid) return json(res, 401, { error: '账号或密码错误' });
       if (/^[0-9a-f]{64}$/.test(user.password_hash)) await db.run('UPDATE admin_users SET password_hash = ? WHERE username = ?', [hashPassword(String(body.password || '')), user.username]);
-      const token = crypto.randomBytes(32).toString('hex');
-      sessions.set(token, { username: user.username, role: user.role, expiresAt: Date.now() + SESSION_TTL_MS });
+      const token = createSessionToken(user.username, user.role);
       await logAudit({ username: user.username }, 'login', null, req);
       const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
       return json(res, 200, { success: true }, { 'Set-Cookie': `visitor_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_TTL_MS / 1000}${secure}` });
@@ -203,7 +216,7 @@ async function handle(req, res) {
   }
   if (req.method === 'POST' && pathname === '/api/admin/logout') {
     const session = currentSession(req);
-    if (session) { await logAudit(session, 'logout', null, req); sessions.delete(session.token); }
+    if (session) await logAudit(session, 'logout', null, req);
     return json(res, 200, { success: true }, { 'Set-Cookie': 'visitor_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0' });
   }
   if (pathname.startsWith('/api/admin/')) {
@@ -260,10 +273,9 @@ async function handle(req, res) {
   return json(res, 404, { error: 'Not found' });
 }
 
-const server = http.createServer((req, res) => {
-  handle(req, res).catch((error) => { console.error(error); if (!res.headersSent) json(res, 500, { error: '服务器内部错误' }); });
-});
+const handler = (req, res) => handle(req, res).catch((error) => { console.error(error); if (!res.headersSent) json(res, 500, { error: '服务器内部错误' }); });
+const server = http.createServer(handler);
 
 if (require.main === module) server.listen(PORT, () => console.log(`Visitor system listening on http://localhost:${PORT}`));
 
-module.exports = { server, db, validateVisitor, hashPassword, verifyPassword, dateRange };
+module.exports = { server, handler, db, validateVisitor, hashPassword, verifyPassword, dateRange };

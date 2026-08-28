@@ -54,16 +54,16 @@ npm start
 
 ## 云端试用部署
 
-本项目支持两种数据库模式：本机未设置 `DATABASE_URL` 时使用 SQLite；设置 `DATABASE_URL` 后自动使用 PostgreSQL。Render 部署请配合 Neon 等 PostgreSQL 服务，不能把 SQLite 文件作为云端长期数据存储。
+本项目支持两种数据库模式：本机未设置 `DATABASE_URL` 时使用 SQLite；设置 `DATABASE_URL` 后自动使用 PostgreSQL。Vercel 部署请配合 Supabase、Neon 等 PostgreSQL 服务，不能把 SQLite 文件作为云端长期数据存储。
 
-1. 在 Neon 创建数据库，复制连接串 `DATABASE_URL`。
-2. 将项目放入 GitHub 仓库。
-3. 在 Render 选择 **New → Blueprint**，选择该仓库，Render 会读取 [`render.yaml`](E:/Codex/07_个人工作台/访客系统/render.yaml)。
-4. 在 Render 填写 `ADMIN_PASSWORD` 和 `DATABASE_URL`。
+1. 在 Supabase 或 Neon 创建数据库，复制连接串 `DATABASE_URL`。
+2. 在 Vercel 导入 GitHub 仓库 `hltong2000-commits/puya-visitor-system`。
+3. Vercel 会读取 [`vercel.json`](E:/Codex/07_个人工作台/访客系统/vercel.json)，将请求交给 `api/index.js`。
+4. 在 Vercel 项目设置中填写 `ADMIN_PASSWORD` 和 `DATABASE_URL`。
 5. 部署完成后访问 `/api/health`，应返回 `{"ok":true,"database":"postgres"}`。
-6. 用 Render 的 HTTPS 地址打开 `/`，确认登记页后再生成正式二维码。
+6. 用 Vercel 的 HTTPS 地址打开 `/`，确认登记页后再生成正式二维码。
 
-Render 免费服务空闲后会休眠，仅用于试用；正式上线前需评估稳定性、备份和服务计划。
+Vercel Hobby 适合低流量试用；数据库连接和用量仍受 Supabase/Neon 与 Vercel 免费计划限制。
 
 ## 维护约定
 

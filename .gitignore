@@ -3,3 +3,4 @@ data/*.db-shm
 data/*.db-wal
 .env
 node_modules/
+public/assets/visitor-registration-public-qr.png
