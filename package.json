@@ -1,0 +1,13 @@
+{
+  "name": "puya-visitor-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "普冉半导体外来客户手机扫码登记系统",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  }
+}

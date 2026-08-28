@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>普冉半导体访客登记</title><link rel="stylesheet" href="/static/styles.css"></head>
+<body class="visitor-body">
+  <main class="visitor-shell">
+    <section class="welcome-panel">
+      <img class="brand-logo" src="/assets/puya-logo-transparent.png" alt="普冉半导体 PUYA" width="165" height="72">
+      <div class="welcome-copy"><p class="eyebrow">PUYA SEMICONDUCTOR</p><h1>欢迎来访</h1><p>Visitor Registration</p><div class="culture-list" aria-label="企业文化"><div class="culture-item"><strong>持续创新</strong><span>Persistent in Innovation</span></div><div class="culture-item"><strong>卓越品质</strong><span>Uncompromised Quality</span></div><div class="culture-item"><strong>恒久伙伴</strong><span>Your long-term Partner</span></div><div class="culture-item"><strong>信守承诺</strong><span>Authentic Commitment</span></div></div></div>
+    </section>
+    <section class="form-panel">
+      <div class="form-heading"><img class="form-logo" src="/assets/puya-logo-transparent.png" alt="普冉半导体 PUYA" width="118" height="52"><p class="eyebrow">VISITOR ACCESS</p><h2>访客登记</h2><p>请填写本次来访信息，提交后联系前台。</p></div>
+      <form id="visitor-form" class="visitor-form" novalidate>
+        <div class="field"><label>姓名 <input name="name" maxlength="50" autocomplete="name" required></label><small data-error="name"></small></div>
+        <div class="field"><label>手机号 <input name="mobile" inputmode="tel" maxlength="20" autocomplete="tel" required></label><small data-error="mobile"></small></div>
+        <div class="field"><label>公司 <input name="company" maxlength="100" required></label><small data-error="company"></small></div>
+        <div class="field"><label>被访人 <input name="host_name" maxlength="50" required></label><small data-error="host_name"></small></div>
+        <div class="field field-wide"><label>来访事由 <textarea name="visit_reason" maxlength="200" rows="3" required></textarea></label><small data-error="visit_reason"></small></div>
+        <div class="field"><label>同行人数 <input name="companions" type="number" min="0" max="50" value="0" required></label><small data-error="companions"></small></div>
+        <div class="field"><label>车牌号 <span class="optional">选填</span><input name="vehicle_plate" maxlength="20"></label><small data-error="vehicle_plate"></small></div>
+        <div class="form-actions field-wide"><p class="privacy">提交即表示您知悉：信息仅用于本次来访登记和现场接待管理。</p><button type="submit" class="primary">提交登记</button><p id="form-message" class="message" role="status"></p></div>
+      </form>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

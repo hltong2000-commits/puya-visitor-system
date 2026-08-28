@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>访客后台</title><link rel="stylesheet" href="/static/styles.css"></head>
+<body class="admin-body">
+  <main class="admin-shell">
+    <section id="login-view" class="login-panel"><img class="brand-logo admin-logo" src="/assets/puya-logo-transparent.png" alt="普冉半导体 PUYA" width="165" height="72"><p class="eyebrow">PUYA VISITOR ADMIN</p><h1>访客后台</h1><form id="login-form"><label>账号<input name="username" value="admin" autocomplete="username" required></label><label>密码<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">登录</button><p id="login-message" class="message"></p></form></section>
+    <section id="dashboard-view" hidden>
+      <div class="admin-header"><div class="admin-brand"><img class="brand-logo" src="/assets/puya-logo-transparent.png" alt="普冉半导体 PUYA" width="165" height="72"><div><p class="eyebrow">PUYA VISITOR ADMIN</p><h1>访客记录</h1></div></div><button id="logout-button" class="secondary">退出</button></div>
+      <form id="filter-form" class="filter-bar"><label>开始日期<input type="date" name="date_from"></label><label>结束日期<input type="date" name="date_to"></label><label class="keyword">关键词<input name="keyword" placeholder="姓名 / 公司 / 被访人 / 手机号"></label><button class="primary">查询</button><button type="button" id="export-button" class="secondary">导出 CSV</button></form>
+      <p id="list-message" class="message"></p><div class="table-wrap"><table><thead><tr><th>登记时间</th><th>姓名</th><th>手机号</th><th>公司</th><th>被访人</th><th>来访事由</th><th>同行</th><th>车牌</th><th>操作</th></tr></thead><tbody id="visitor-rows"></tbody></table></div>
+    </section>
+  </main>
+  <dialog id="detail-dialog"><button class="dialog-close" aria-label="关闭">×</button><h2>访客详情</h2><dl id="detail-list"></dl></dialog>
+  <script src="/static/admin.js"></script>
+</body>
+</html>
