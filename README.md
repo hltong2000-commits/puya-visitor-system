@@ -58,7 +58,7 @@ npm start
 
 1. 在 Supabase 或 Neon 创建数据库，复制连接串 `DATABASE_URL`。
 2. 在 Vercel 导入 GitHub 仓库 `hltong2000-commits/puya-visitor-system`。
-3. Vercel 会读取 [`vercel.json`](E:/Codex/07_个人工作台/访客系统/vercel.json)，将请求交给 `api/index.js`。
+3. Vercel 会读取 [`vercel.json`](E:/Codex/07_个人工作台/访客系统/vercel.json)，将请求交给 `api/index.js`，并自动选择受支持的 Node.js Runtime。
 4. 在 Vercel 项目设置中填写 `ADMIN_PASSWORD` 和 `DATABASE_URL`。
 5. 部署完成后访问 `/api/health`，应返回 `{"ok":true,"database":"postgres"}`。
 6. 用 Vercel 的 HTTPS 地址打开 `/`，确认登记页后再生成正式二维码。
