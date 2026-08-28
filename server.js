@@ -278,4 +278,5 @@ const server = http.createServer(handler);
 
 if (require.main === module) server.listen(PORT, () => console.log(`Visitor system listening on http://localhost:${PORT}`));
 
-module.exports = { server, handler, db, validateVisitor, hashPassword, verifyPassword, dateRange };
+module.exports = handler;
+Object.assign(module.exports, { server, handler, db, validateVisitor, hashPassword, verifyPassword, dateRange });
