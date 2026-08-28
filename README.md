@@ -36,8 +36,8 @@ data_quality: "内部方案"
 | --- | --- |
 | 方案设计 | 已确认 |
 | 知识库 | 已创建 |
-| 软件开发 | MVP 已完成，可本地运行 |
-| 现场试点 | 未开始 |
+| 软件开发 | MVP 已完成，Vercel + Neon 试用环境已部署 |
+| 现场试点 | 云端联调通过，待前台试用 |
 
 ## 本地运行
 
@@ -53,6 +53,11 @@ npm start
 - 页面已使用普冉半导体 LOGO：`public/assets/puya-logo.png`。
 
 ## 云端试用部署
+
+- 手机登记页：<https://puya-visitor-system.vercel.app/>
+- 后台入口：<https://puya-visitor-system.vercel.app/admin>
+- 健康检查：<https://puya-visitor-system.vercel.app/api/health>
+- 固定二维码：`public/assets/visitor-registration-qr.png`
 
 本项目支持两种数据库模式：本机未设置 `DATABASE_URL` 时使用 SQLite；设置 `DATABASE_URL` 后自动使用 PostgreSQL。Vercel 部署请配合 Supabase、Neon 等 PostgreSQL 服务，不能把 SQLite 文件作为云端长期数据存储。
 
