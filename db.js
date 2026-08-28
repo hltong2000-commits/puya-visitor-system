@@ -1,11 +1,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { DatabaseSync } = require('node:sqlite');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const DB_PATH = process.env.DB_PATH || path.join(DATA_DIR, 'visitors.db');
 
 function sqliteAdapter() {
+  const { DatabaseSync } = require('node:sqlite');
   fs.mkdirSync(DATA_DIR, { recursive: true });
   const database = new DatabaseSync(DB_PATH);
   return {
