@@ -53,6 +53,14 @@ npm start
 - 生产环境必须设置 `ADMIN_PASSWORD`，并通过 HTTPS 反向代理发布。
 - 页面已使用普冉半导体透明 LOGO：`public/assets/puya-logo-transparent.png`。
 
+## 生成正式部署包
+
+```powershell
+./scripts/package-release.ps1
+```
+
+默认生成 `dist/puya-visitor-system-release.zip`。包内包含 Node.js 服务、静态资源、Dockerfile、PostgreSQL 建表脚本和环境变量模板，不包含真实密钥及本地数据。详细说明见 [[docs/正式部署包说明]]。
+
 ## CloudBase 目标部署
 
 目标架构为：微信或手机浏览器访问 CloudBase 静态托管页面，同源 `/api/*` 网关转发至 Node.js HTTP 云函数，业务数据写入 CloudBase PostgreSQL。本机未配置 PostgreSQL 时继续使用 SQLite；生产环境不得回退到云函数临时文件系统中的 SQLite。
