@@ -73,7 +73,11 @@ npx --package @cloudbase/cli@3.8.1 tcb validate
 npx --package @cloudbase/cli@3.8.1 tcb deploy
 ```
 
-线上验收依次检查 `/api/health` 返回 PostgreSQL、访客提交成功并显示完整登记摘要、后台可查询到一致记录，以及微信扫描固定二维码能够完成登记。最终 CloudBase 公网 URL、后台地址、健康检查地址和验证日期只在实际部署及真机联调成功后回填；在此之前不生成或发布新的固定二维码。
+线上验收依次检查 `/api/health` 返回 PostgreSQL、访客提交成功并显示完整登记摘要、后台可查询到一致记录，以及微信扫描固定二维码能够完成登记。当前 CloudBase 公网入口如下：
+
+- 手机登记页：<https://puya-visitor-system-d8bjd061ec19-1421207492.ap-shanghai.app.tcloudbase.com/>
+- 后台入口：<https://puya-visitor-system-d8bjd061ec19-1421207492.ap-shanghai.app.tcloudbase.com/admin>
+- 健康检查：<https://puya-visitor-system-d8bjd061ec19-1421207492.ap-shanghai.app.tcloudbase.com/api/health>
 
 CloudBase 免费环境需要定期续期并监控资源点、函数、数据库和流量配额，不应按永久无限额服务规划。
 
