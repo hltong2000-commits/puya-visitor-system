@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>普冉半导体访客登记</title><link rel="stylesheet" href="/static/styles.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>普冉半导体访客登记</title><link rel="stylesheet" href="/styles.css"></head>
 <body class="visitor-body">
   <main class="visitor-shell">
     <section class="welcome-panel">
@@ -8,7 +8,7 @@
       <div class="welcome-copy"><p class="eyebrow">PUYA SEMICONDUCTOR</p><h1>欢迎来访</h1><p>Visitor Registration</p><div class="culture-list" aria-label="企业文化"><div class="culture-item"><strong>持续创新</strong><span>Persistent in Innovation</span></div><div class="culture-item"><strong>卓越品质</strong><span>Uncompromised Quality</span></div><div class="culture-item"><strong>恒久伙伴</strong><span>Your long-term Partner</span></div><div class="culture-item"><strong>信守承诺</strong><span>Authentic Commitment</span></div></div></div>
     </section>
     <section class="form-panel">
-      <div class="form-heading"><img class="form-logo" src="/assets/puya-logo-transparent.png" alt="普冉半导体 PUYA" width="118" height="52"><p class="eyebrow">VISITOR ACCESS</p><h2>访客登记</h2><p>请填写本次来访信息，提交后联系前台。</p></div>
+      <div class="form-heading"><img class="form-logo" src="/assets/puya-logo-transparent.png" alt="普冉半导体 PUYA" width="118" height="52"><p class="eyebrow">VISITOR ACCESS</p><h2>访客登记</h2><p>请填写本次来访信息，提交成功即完成登记。</p></div>
       <form id="visitor-form" class="visitor-form" novalidate>
         <div class="field"><label>姓名 <input name="name" maxlength="50" autocomplete="name" required></label><small data-error="name"></small></div>
         <div class="field"><label>手机号 <input name="mobile" inputmode="tel" maxlength="20" autocomplete="tel" required></label><small data-error="mobile"></small></div>
@@ -19,8 +19,23 @@
         <div class="field"><label>车牌号 <span class="optional">选填</span><input name="vehicle_plate" maxlength="20"></label><small data-error="vehicle_plate"></small></div>
         <div class="form-actions field-wide"><p class="privacy">提交即表示您知悉：信息仅用于本次来访登记和现场接待管理。</p><button type="submit" class="primary">提交登记</button><p id="form-message" class="message" role="status"></p></div>
       </form>
+      <section id="registration-success" class="registration-success" aria-live="polite" tabindex="-1" hidden>
+        <p class="success-kicker">REGISTRATION COMPLETE</p>
+        <h3>登记成功</h3>
+        <p class="success-note">以下是本次登记信息，请核对。</p>
+        <dl class="receipt-list">
+          <div><dt>登记时间</dt><dd data-receipt="created_at"></dd></div>
+          <div><dt>姓名</dt><dd data-receipt="name"></dd></div>
+          <div><dt>手机号</dt><dd data-receipt="mobile"></dd></div>
+          <div><dt>公司</dt><dd data-receipt="company"></dd></div>
+          <div><dt>被访人</dt><dd data-receipt="host_name"></dd></div>
+          <div><dt>来访事由</dt><dd data-receipt="visit_reason"></dd></div>
+          <div><dt>同行人数</dt><dd data-receipt="companions"></dd></div>
+          <div><dt>车牌号</dt><dd data-receipt="vehicle_plate"></dd></div>
+        </dl>
+      </section>
     </section>
   </main>
-  <script src="/static/app.js"></script>
+  <script src="/app.js"></script>
 </body>
 </html>

@@ -2,5 +2,7 @@ data/*.db
 data/*.db-shm
 data/*.db-wal
 .env
+.env.local
+.env.*.local
 node_modules/
 public/assets/visitor-registration-public-qr.png

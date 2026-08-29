@@ -1,0 +1,101 @@
+{
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "version": "2.1",
+  "envId": "{{env.TCB_ENV_ID}}",
+  "region": "ap-shanghai",
+  "functions": [
+    {
+      "name": "visitor-api",
+      "type": "HTTP",
+      "dir": ".",
+      "runtime": "Nodejs20.19",
+      "timeout": 15,
+      "memorySize": 256,
+      "installDependency": true,
+      "public": true,
+      "envVariables": {
+        "NODE_ENV": "production",
+        "ADMIN_PASSWORD": "{{env.ADMIN_PASSWORD}}",
+        "TCB_ENV_ID": "{{env.TCB_ENV_ID}}",
+        "CLOUDBASE_APIKEY": "{{env.CLOUDBASE_APIKEY}}",
+        "TCB_DB_INSTANCE": "{{env.TCB_DB_INSTANCE}}",
+        "TCB_DB_SCHEMA": "{{env.TCB_DB_SCHEMA}}"
+      },
+      "ignore": [
+        ".git",
+        ".git/**",
+        ".obsidian",
+        ".obsidian/**",
+        ".env",
+        ".env.*",
+        "node_modules",
+        "node_modules/**",
+        "data",
+        "data/**",
+        "public",
+        "public/**",
+        "api",
+        "api/**",
+        "docs",
+        "docs/**",
+        "scripts",
+        "scripts/**",
+        "00-MOC",
+        "00-MOC/**",
+        "01-业务方案",
+        "01-业务方案/**",
+        "02-产品设计",
+        "02-产品设计/**",
+        "03-技术方案",
+        "03-技术方案/**",
+        "04-安全与合规",
+        "04-安全与合规/**",
+        "05-实施路线",
+        "05-实施路线/**",
+        "10-数据仪表盘",
+        "10-数据仪表盘/**",
+        "Canvas",
+        "Canvas/**",
+        "Templates",
+        "Templates/**",
+        "test-server.js",
+        "README.md",
+        "render.yaml",
+        "vercel.json",
+        "cloudbaserc.json"
+      ]
+    }
+  ],
+  "hosting": [
+    {
+      "name": "visitor-web",
+      "root": ".",
+      "framework": "static",
+      "outputDir": "public",
+      "installCommand": "",
+      "buildCommand": "",
+      "deployPath": "/"
+    }
+  ],
+  "gateway": {
+    "routes": [
+      {
+        "path": "/api",
+        "target": "function:visitor-api",
+        "protocol": "HTTP_TO_HTTPS",
+        "enablePathTransmission": true,
+        "qpsPolicy": {
+          "qpsTotal": 100,
+          "qpsPerClient": {
+            "limitBy": "ClientIP",
+            "limitValue": 5
+          }
+        }
+      },
+      {
+        "path": "/",
+        "target": "hosting:visitor-web"
+      }
+    ]
+  }
+}

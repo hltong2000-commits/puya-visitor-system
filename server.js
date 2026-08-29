@@ -50,7 +50,7 @@ function verifyPassword(password, stored) {
   return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(actual));
 }
 
-const adminReady = dbReady.then(async () => { const adminExists = await db.get('SELECT username FROM admin_users WHERE username = ?', ['admin']); if (!adminExists) { await db.run('INSERT INTO admin_users(username, password_hash) VALUES (?, ?)', ['admin', hashPassword(ADMIN_PASSWORD)]); if (!process.env.ADMIN_PASSWORD) console.warn('Using development admin password; set ADMIN_PASSWORD before deployment.'); } });
+const adminReady = dbReady.then(async () => { const adminExists = await db.findAdmin('admin'); if (!adminExists) { await db.createAdmin('admin', hashPassword(ADMIN_PASSWORD)); if (!process.env.ADMIN_PASSWORD) console.warn('Using development admin password; set ADMIN_PASSWORD before deployment.'); } });
 
 function json(res, status, payload, headers = {}) {
   const body = JSON.stringify(payload);
@@ -153,7 +153,7 @@ function validateVisitor(input) {
 }
 
 function logAudit(session, action, targetId, req) {
-  return db.run('INSERT INTO audit_logs(username, action, target_id, created_at, ip) VALUES (?, ?, ?, ?, ?)', [session?.username || null, action, targetId || null, new Date().toISOString(), clientIp(req)]);
+  return db.createAuditLog({ username: session?.username || null, action, targetId: targetId || null, createdAt: new Date().toISOString(), ip: clientIp(req) });
 }
 
 function maskedMobile(mobile) { return mobile ? `${mobile.slice(0, 3)}****${mobile.slice(-4)}` : ''; }
@@ -182,8 +182,11 @@ async function handle(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
   if (req.method === 'GET' && pathname === '/') return html(res, 'index.html');
-  if (req.method === 'GET' && pathname === '/admin') return html(res, 'admin.html');
+  if (req.method === 'GET' && pathname === '/admin') return html(res, 'admin/index.html');
   if (req.method === 'GET' && pathname === '/api/health') return json(res, 200, { ok: true, database: db.kind });
+  if (req.method === 'GET' && ['/app.js', '/admin.js', '/styles.css'].includes(pathname)) {
+    return staticFile(res, pathname.slice(1)) ? undefined : json(res, 404, { error: 'Not found' });
+  }
   if (req.method === 'GET' && pathname.startsWith('/static/')) return staticFile(res, pathname.slice('/static/'.length)) ? undefined : json(res, 404, { error: 'Not found' });
   if (req.method === 'GET' && pathname.startsWith('/assets/')) return staticFile(res, pathname.slice('/assets/'.length), path.join(PUBLIC_DIR, 'assets')) ? undefined : json(res, 404, { error: 'Not found' });
   if (req.method === 'POST' && pathname === '/api/visitors') {
@@ -193,21 +196,37 @@ async function handle(req, res) {
       const { errors, value } = validateVisitor(body);
       if (Object.keys(errors).length) return json(res, 400, { error: '请检查登记信息', fields: errors });
       const duplicateSince = new Date(Date.now() - 10 * 60_000).toISOString();
-      const duplicate = await db.get("SELECT id FROM visitors WHERE mobile = ? AND created_at >= ? AND status = 'normal'", [value.mobile, duplicateSince]);
+      const duplicate = await db.findRecentVisitor(value.mobile, duplicateSince);
       if (duplicate && !body.confirm_duplicate) return json(res, 409, { error: '该手机号刚刚登记过，如需再次登记请确认', duplicate: true });
       const row = { id: crypto.randomUUID(), ...value, created_at: new Date().toISOString() };
-      await db.run('INSERT INTO visitors(id,name,mobile,company,host_name,visit_reason,companions,vehicle_plate,created_at) VALUES (?,?,?,?,?,?,?,?,?)', [row.id, row.name, row.mobile, row.company, row.host_name, row.visit_reason, row.companions, row.vehicle_plate, row.created_at]);
-      return json(res, 201, { success: true });
-    } catch (error) { return json(res, 400, { error: error.message === 'invalid json' ? '提交内容格式错误' : '提交失败，请稍后重试' }); }
+      await db.createVisitor(row);
+      return json(res, 201, {
+        success: true,
+        visitor: {
+          name: row.name,
+          mobile: row.mobile,
+          company: row.company,
+          host_name: row.host_name,
+          visit_reason: row.visit_reason,
+          companions: row.companions,
+          vehicle_plate: row.vehicle_plate || '',
+          created_at: row.created_at
+        }
+      });
+    } catch (error) {
+      if (error.message === 'invalid json') return json(res, 400, { error: '提交内容格式错误' });
+      console.error(error);
+      return json(res, 500, { error: '提交失败，请稍后重试' });
+    }
   }
   if (req.method === 'POST' && pathname === '/api/admin/login') {
     if (!rateLimit(req, res, 'admin-login', 10, 10 * 60_000)) return;
     try {
       const body = await readBody(req);
-      const user = await db.get('SELECT username, password_hash, role FROM admin_users WHERE username = ?', [String(body.username || '')]);
+      const user = await db.findAdmin(String(body.username || ''));
       const valid = user && verifyPassword(String(body.password || ''), user.password_hash);
       if (!valid) return json(res, 401, { error: '账号或密码错误' });
-      if (/^[0-9a-f]{64}$/.test(user.password_hash)) await db.run('UPDATE admin_users SET password_hash = ? WHERE username = ?', [hashPassword(String(body.password || '')), user.username]);
+      if (/^[0-9a-f]{64}$/.test(user.password_hash)) await db.updateAdminPassword(user.username, hashPassword(String(body.password || '')));
       const token = createSessionToken(user.username, user.role);
       await logAudit({ username: user.username }, 'login', null, req);
       const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
@@ -234,8 +253,9 @@ async function handle(req, res) {
       try { [start, end] = dateRange(from, to); } catch (error) { return json(res, 400, { error: error.message }); }
       const pattern = `%${keyword}%`;
       const where = `created_at >= ? AND created_at < ? AND status = ? AND (name LIKE ? OR mobile LIKE ? OR company LIKE ? OR host_name LIKE ?)`;
-      const rows = await db.all(`SELECT * FROM visitors WHERE ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`, [start, end, status, pattern, pattern, pattern, pattern, limit, offset]);
-      const total = (await db.get(`SELECT COUNT(*) AS count FROM visitors WHERE ${where}`, [start, end, status, pattern, pattern, pattern, pattern])).count;
+      const result = await db.listVisitors({ start, end, status, keyword, limit, offset });
+      const rows = result.items;
+      const total = result.total;
       await logAudit(session, 'query', null, req);
       return json(res, 200, { items: rows.map((row) => visitorView(row)), total, limit, offset });
     }
@@ -246,7 +266,7 @@ async function handle(req, res) {
       let start; let end;
       try { [start, end] = dateRange(from, to); } catch (error) { return json(res, 400, { error: error.message }); }
       const pattern = `%${keyword}%`;
-      const rows = await db.all("SELECT * FROM visitors WHERE created_at >= ? AND created_at < ? AND status = 'normal' AND (name LIKE ? OR mobile LIKE ? OR company LIKE ? OR host_name LIKE ?) ORDER BY created_at DESC", [start, end, pattern, pattern, pattern, pattern]);
+      const rows = await db.exportVisitors({ start, end, keyword });
       const header = ['登记时间', '姓名', '手机号', '公司', '被访人', '来访事由', '同行人数', '车牌号'];
       const lines = [header, ...rows.map((row) => [row.created_at, row.name, row.mobile, row.company, row.host_name, row.visit_reason, row.companions, row.vehicle_plate || ''])].map((line) => line.map(csvCell).join(','));
       await logAudit(session, 'export', null, req);
@@ -255,7 +275,7 @@ async function handle(req, res) {
     }
     const visitorMatch = pathname.match(/^\/api\/admin\/visitors\/([0-9a-f-]{36})$/i);
     if (req.method === 'GET' && visitorMatch) {
-      const row = await db.get('SELECT * FROM visitors WHERE id = ?', [visitorMatch[1]]);
+      const row = await db.findVisitorById(visitorMatch[1]);
       if (!row) return json(res, 404, { error: '记录不存在' });
       await logAudit(session, 'detail', row.id, req);
       return json(res, 200, visitorView(row, true));
@@ -264,8 +284,8 @@ async function handle(req, res) {
       if (session.role !== 'admin') return json(res, 403, { error: '无权限' });
       const body = await readBody(req);
       if (!['normal', 'hidden'].includes(body.status)) return json(res, 400, { error: '状态无效' });
-      const result = await db.run('UPDATE visitors SET status = ? WHERE id = ?', [body.status, visitorMatch[1]]);
-      if (!result.changes) return json(res, 404, { error: '记录不存在' });
+      const changes = await db.updateVisitorStatus(visitorMatch[1], body.status);
+      if (!changes) return json(res, 404, { error: '记录不存在' });
       await logAudit(session, 'status_change', visitorMatch[1], req);
       return json(res, 200, { success: true });
     }
